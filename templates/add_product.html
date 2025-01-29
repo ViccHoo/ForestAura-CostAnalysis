@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body p-4">
+                <h2 class="text-center mb-4">添加新商品</h2>
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">商品名称</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="category" class="form-label">商品类别</label>
+                        <select class="form-select" id="category" name="category" required>
+                            <option value="水晶制品">水晶制品</option>
+                            <option value="木制品">木制品</option>
+                            <option value="国画艺术品">国画艺术品</option>
+                            <option value="玉石">玉石</option>
+                            <option value="其它">其它</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="purchase_cost" class="form-label">进货成本（单件）</label>
+                        <div class="input-group">
+                            <span class="input-group-text">¥</span>
+                            <input type="number" step="0.01" class="form-control" id="purchase_cost" name="purchase_cost" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="selling_price" class="form-label">售价（单件）</label>
+                        <div class="input-group">
+                            <span class="input-group-text">¥</span>
+                            <input type="number" step="0.01" class="form-control" id="selling_price" name="selling_price" required>
+                        </div>
+                        <div class="profit-preview mt-2 text-muted small">
+                            预计单件利润：<span id="profit-amount">¥0.00</span>
+                            (<span id="profit-percentage">0%</span>)
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="inventory" class="form-label">初始库存</label>
+                        <input type="number" class="form-control" id="inventory" name="inventory" 
+                               min="0" value="0" required>
+                        <div class="form-text">设置商品的初始库存数量</div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">添加商品</button>
+                        <a href="{{ url_for('products') }}" class="btn btn-secondary">返回</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const purchaseCostInput = document.getElementById('purchase_cost');
+    const sellingPriceInput = document.getElementById('selling_price');
+    const profitAmount = document.getElementById('profit-amount');
+    const profitPercentage = document.getElementById('profit-percentage');
+
+    function updateProfit() {
+        const purchaseCost = parseFloat(purchaseCostInput.value) || 0;
+        const sellingPrice = parseFloat(sellingPriceInput.value) || 0;
+        const profit = sellingPrice - purchaseCost;
+        const percentage = purchaseCost > 0 ? (profit / purchaseCost * 100) : 0;
+
+        profitAmount.textContent = `¥${profit.toFixed(2)}`;
+        profitAmount.className = profit >= 0 ? 'text-success' : 'text-danger';
+        profitPercentage.textContent = `${percentage.toFixed(1)}%`;
+        profitPercentage.className = profit >= 0 ? 'text-success' : 'text-danger';
+    }
+
+    purchaseCostInput.addEventListener('input', updateProfit);
+    sellingPriceInput.addEventListener('input', updateProfit);
+});
+</script>
+{% endblock %} 

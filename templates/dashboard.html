@@ -1,0 +1,416 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="dashboard forest-theme">
+    <!-- 页面标题 -->
+    <div class="page-title mb-4">
+        <h1>ForestAura 经营概览</h1>
+        <p class="text-muted">静心经营，自然生长</p>
+    </div>
+
+    <!-- 主要统计卡片 -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="stat-card revenue">
+                <div class="card-body">
+                    <h6 class="card-subtitle">总收入</h6>
+                    <h2 class="card-title">¥{{ "%.2f"|format(data.product_stats.total_revenue) }}</h2>
+                    <div class="stat-icon">
+                        <i class="fas fa-coins"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card costs">
+                <div class="card-body">
+                    <h6 class="card-subtitle">总成本</h6>
+                    <h2 class="card-title">¥{{ "%.2f"|format(data.product_stats.total_purchase_cost + data.product_stats.total_operation_cost) }}</h2>
+                    <div class="stat-details">
+                        <small>进货：¥{{ "%.2f"|format(data.product_stats.total_purchase_cost) }}</small>
+                        <small>运营：¥{{ "%.2f"|format(data.product_stats.total_operation_cost) }}</small>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="fas fa-file-invoice-dollar"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card profit">
+                <div class="card-body">
+                    <h6 class="card-subtitle">实际利润</h6>
+                    <h2 class="card-title">¥{{ "%.2f"|format(data.product_stats.actual_total_profit) }}</h2>
+                    <div class="stat-details">
+                        <small>利润率：{{ "%.1f"|format(data.product_stats.profit_margin) }}%</small>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card inventory">
+                <div class="card-body">
+                    <h6 class="card-subtitle">库存与销量</h6>
+                    <h2 class="card-title">{{ data.product_stats.total_inventory }}</h2>
+                    <div class="stat-details">
+                        <small>总销量：{{ data.product_stats.total_sales }}</small>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="fas fa-boxes"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 商品类别统计 -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card category-stats">
+                <div class="card-header">
+                    <h5><i class="fas fa-leaf me-2"></i>商品类别概览</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for category, count, inventory, sales, revenue, cost in data.products_by_category %}
+                        <div class="col-md-4 mb-3">
+                            <div class="category-stat-card">
+                                <div class="category-icon">
+                                    {% if category == '水晶制品' %}
+                                        <i class="fas fa-gem"></i>
+                                    {% elif category == '木制品' %}
+                                        <i class="fas fa-tree"></i>
+                                    {% elif category == '国画艺术品' %}
+                                        <i class="fas fa-paint-brush"></i>
+                                    {% elif category == '玉石' %}
+                                        <i class="fas fa-circle"></i>
+                                    {% else %}
+                                        <i class="fas fa-star"></i>
+                                    {% endif %}
+                                </div>
+                                <h5>{{ category }}</h5>
+                                <div class="stats-grid">
+                                    <div class="stat-item">
+                                        <span class="label">商品数</span>
+                                        <span class="value">{{ count }}</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="label">库存</span>
+                                        <span class="value">{{ inventory or 0 }}</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="label">销量</span>
+                                        <span class="value">{{ sales or 0 }}</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="label">收入</span>
+                                        <span class="value">¥{{ "%.2f"|format(revenue or 0) }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 数据详情 -->
+    <div class="row">
+        <!-- 最近添加 -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 recent-products">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-clock me-2"></i>最近添加</h5>
+                        <a href="{{ url_for('products') }}" class="btn btn-sm btn-outline-primary">查看全部</a>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for product in data.recent_products %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">{{ product.name }}</h6>
+                                    <small class="text-muted">{{ product.category }}</small>
+                                </div>
+                                <span class="badge bg-light text-dark">
+                                    库存: {{ product.inventory }}
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 销量排行 -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 top-sales">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-crown me-2"></i>销量之星</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for product in data.top_selling_products %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">{{ product.name }}</h6>
+                                    <small class="text-muted">{{ product.category }}</small>
+                                </div>
+                                <span class="badge bg-success">
+                                    {{ product.total_sales }} 件
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 利润之星 -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 top-profits">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-star me-2"></i>利润之星</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for product in data.top_profit_products %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">{{ product.name }}</h6>
+                                    <small class="text-muted">{{ product.category }}</small>
+                                </div>
+                                <span class="badge bg-primary">
+                                    ¥{{ "%.2f"|format(product.actual_profit) }}
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 成本统计 -->
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card operation-costs">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-file-invoice me-2"></i>运营成本</h5>
+                    <a href="{{ url_for('costs') }}" class="btn btn-sm btn-outline-primary">管理成本</a>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for category, amount in data.cost_by_category %}
+                        <div class="col-md-3 mb-3">
+                            <div class="cost-stat-card">
+                                <h6>{{ category }}</h6>
+                                <h4>¥{{ "%.2f"|format(amount) }}</h4>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.forest-theme {
+    --primary-color: #2c3e50;
+    --secondary-color: #34495e;
+    --accent-color: #27ae60;
+    --light-bg: #f5f6fa;
+    --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --hover-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.page-title {
+    text-align: center;
+    padding: 2rem 0;
+}
+
+.page-title h1 {
+    font-size: 2.5rem;
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 15px;
+    border: none;
+    box-shadow: var(--card-shadow);
+    transition: all 0.3s ease;
+    overflow: hidden;
+    position: relative;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--hover-shadow);
+}
+
+.stat-card .card-body {
+    padding: 1.5rem;
+}
+
+.stat-card .card-subtitle {
+    color: #666;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.stat-card .card-title {
+    color: var(--primary-color);
+    font-size: 1.8rem;
+    margin-bottom: 0.5rem;
+}
+
+.stat-card .stat-icon {
+    position: absolute;
+    right: 20px;
+    bottom: 20px;
+    font-size: 3rem;
+    opacity: 0.1;
+    color: var(--primary-color);
+}
+
+.stat-card .stat-details {
+    display: flex;
+    flex-direction: column;
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.category-stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: var(--card-shadow);
+    transition: all 0.3s ease;
+}
+
+.category-stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--hover-shadow);
+}
+
+.category-icon {
+    font-size: 2rem;
+    color: var(--accent-color);
+    margin-bottom: 1rem;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-item .label {
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.stat-item .value {
+    font-size: 1.1rem;
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.list-group-item {
+    border: none;
+    padding: 1rem 1.5rem;
+    transition: background-color 0.3s ease;
+}
+
+.list-group-item:hover {
+    background-color: var(--light-bg);
+}
+
+.cost-stat-card {
+    background: white;
+    border-radius: 10px;
+    padding: 1.5rem;
+    box-shadow: var(--card-shadow);
+    transition: all 0.3s ease;
+}
+
+.cost-stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--hover-shadow);
+}
+
+.cost-stat-card h6 {
+    color: #666;
+    margin-bottom: 0.5rem;
+}
+
+.cost-stat-card h4 {
+    color: var(--primary-color);
+    margin: 0;
+}
+
+.card-header {
+    background-color: transparent;
+    border-bottom: 1px solid rgba(0,0,0,.1);
+    padding: 1.5rem;
+}
+
+.card-header h5 {
+    margin: 0;
+    color: var(--primary-color);
+}
+
+.btn-outline-primary {
+    color: var(--accent-color);
+    border-color: var(--accent-color);
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+    color: white;
+}
+
+/* 自定义滚动条 */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+</style>
+{% endblock %} 

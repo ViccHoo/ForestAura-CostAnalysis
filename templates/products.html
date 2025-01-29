@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="products-page">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>商品管理</h2>
+        <a href="{{ url_for('add_product') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> 添加商品
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>商品名称</th>
+                            <th>类别</th>
+                            <th>进货成本</th>
+                            <th>售价</th>
+                            <th>库存</th>
+                            <th>销量</th>
+                            <th>实际利润</th>
+                            <th>利润率</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in products %}
+                        <tr>
+                            <td>{{ product.name }}</td>
+                            <td><span class="badge bg-info">{{ product.category }}</span></td>
+                            <td>¥{{ "%.2f"|format(product.purchase_cost) }}</td>
+                            <td>¥{{ "%.2f"|format(product.selling_price) }}</td>
+                            <td>
+                                <span class="badge bg-{{ 'success' if product.inventory > 0 else 'danger' }}">
+                                    {{ product.inventory }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-primary cursor-pointer" 
+                                      data-bs-toggle="modal" 
+                                      data-bs-target="#adjustSalesModal{{ product.id }}"
+                                      style="cursor: pointer;">
+                                    {{ product.total_sales }}
+                                    <i class="fas fa-edit ms-1"></i>
+                                </span>
+                            </td>
+                            <td class="{% if product.actual_profit > 0 %}text-success{% else %}text-danger{% endif %}">
+                                ¥{{ "%.2f"|format(product.actual_profit) }}
+                            </td>
+                            <td class="{% if product.profit_margin > 0 %}text-success{% else %}text-danger{% endif %}">
+                                {{ "%.1f"|format(product.profit_margin) }}%
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-success btn-sm" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#inventoryModal{{ product.id }}"
+                                            title="入库">
+                                        <i class="fas fa-boxes"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-primary btn-sm"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#salesModal{{ product.id }}"
+                                            title="记录销售">
+                                        <i class="fas fa-shopping-cart"></i>
+                                    </button>
+                                    <a href="{{ url_for('delete_product', id=product.id) }}" 
+                                       class="btn btn-danger btn-sm"
+                                       onclick="return confirm('确定要删除这个商品吗？')"
+                                       title="删除">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+
+                                <!-- 入库模态框 -->
+                                <div class="modal fade" id="inventoryModal{{ product.id }}" tabindex="-1">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">添加库存 - {{ product.name }}</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <form action="{{ url_for('update_inventory', id=product.id) }}" method="POST">
+                                                <div class="modal-body">
+                                                    <input type="hidden" name="action" value="add_inventory">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">入库数量</label>
+                                                        <input type="number" class="form-control" name="amount" 
+                                                               min="1" value="1" required>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                                                    <button type="submit" class="btn btn-primary">确认入库</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 销售模态框 -->
+                                <div class="modal fade" id="salesModal{{ product.id }}" tabindex="-1">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">记录销售 - {{ product.name }}</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <form action="{{ url_for('update_inventory', id=product.id) }}" method="POST">
+                                                <div class="modal-body">
+                                                    <input type="hidden" name="action" value="reduce_inventory">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">销售数量</label>
+                                                        <input type="number" class="form-control" name="amount" 
+                                                               min="1" max="{{ product.inventory }}" value="1" required>
+                                                        <div class="form-text">当前库存: {{ product.inventory }}</div>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                                                    <button type="submit" class="btn btn-primary">确认销售</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 调整销量模态框 -->
+                                <div class="modal fade" id="adjustSalesModal{{ product.id }}" tabindex="-1">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">调整销量 - {{ product.name }}</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <form action="{{ url_for('update_inventory', id=product.id) }}" method="POST">
+                                                <div class="modal-body">
+                                                    <input type="hidden" name="action" value="adjust_sales">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">当前销量</label>
+                                                        <input type="number" class="form-control" name="amount" 
+                                                               min="0" value="{{ product.total_sales }}" required>
+                                                        <div class="form-text">
+                                                            当前库存: {{ product.inventory }}<br>
+                                                            <small class="text-muted">
+                                                                * 增加销量会相应减少库存<br>
+                                                                * 减少销量会相应增加库存<br>
+                                                                * 增加销量时需确保有足够库存
+                                                            </small>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                                                    <button type="submit" class="btn btn-primary">确认修改</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.products-page .badge {
+    font-weight: 500;
+    padding: 0.5em 0.8em;
+}
+
+.products-page .table td {
+    white-space: nowrap;
+}
+
+.products-page .btn-group {
+    box-shadow: none;
+}
+
+.products-page .btn-sm {
+    padding: 0.25rem 0.5rem;
+}
+
+.modal-content {
+    border-radius: 15px;
+    border: none;
+}
+
+.modal-header {
+    border-bottom: 1px solid rgba(0,0,0,.1);
+}
+
+.modal-footer {
+    border-top: 1px solid rgba(0,0,0,.1);
+}
+
+.cursor-pointer {
+    cursor: pointer;
+}
+
+.cursor-pointer:hover {
+    opacity: 0.8;
+}
+
+[title] {
+    position: relative;
+}
+
+[title]:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 4px 8px;
+    background-color: rgba(0,0,0,0.8);
+    color: white;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    z-index: 1000;
+}
+</style>
+{% endblock %} 
